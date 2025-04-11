@@ -23,6 +23,7 @@ import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { getWeather } from '@/lib/ai/tools/get-weather';
+import { initSupabaseMCP } from '@/lib/ai/tools/supabase-tools';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 
@@ -80,7 +81,14 @@ export async function POST(request: Request) {
     });
 
     return createDataStreamResponse({
-      execute: (dataStream) => {
+      execute: async (dataStream) => {
+        const getSupabaseTools = initSupabaseMCP({ 
+          session, 
+          dataStream 
+        });
+
+        const supabaseTools = await getSupabaseTools();
+
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel }),
@@ -105,6 +113,7 @@ export async function POST(request: Request) {
               session,
               dataStream,
             }),
+            ...supabaseTools,
           },
           onFinish: async ({ response }) => {
             if (session.user?.id) {
