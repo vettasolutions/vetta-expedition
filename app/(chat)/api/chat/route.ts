@@ -99,6 +99,7 @@ export async function POST(request: Request) {
                   'updateDocument',
                   'requestSuggestions',
                   'sayHello',
+                  'queryDatabase',
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_generateMessageId: generateUUID,
@@ -111,6 +112,7 @@ export async function POST(request: Request) {
               dataStream,
             }),
             sayHello,
+            queryDatabase,
           },
           onFinish: async ({ response }) => {
             if (session.user?.id) {
