@@ -36,12 +36,10 @@ export const initSupabaseMCP = ({
     // Get all available tools from the MCP server
     const supabaseTools = await client.tools();
     
-    // This is where we handle cleanup - note we're registering a callback
-    // just like in the Next.js docs example
-    dataStream.registerCleanupCallback(async () => {
-      await client.close();
-    });
-
-    return supabaseTools;
+    // Return both the tools and the client so we can clean up later
+    return { 
+      tools: supabaseTools, 
+      client 
+    };
   };
 };

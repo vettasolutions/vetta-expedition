@@ -116,6 +116,9 @@ export async function POST(request: Request) {
             ...supabaseTools,
           },
           onFinish: async ({ response }) => {
+            // Close the MCP client
+            await supabaseTools.client.close();
+
             if (session.user?.id) {
               try {
                 const assistantId = getTrailingMessageId({
