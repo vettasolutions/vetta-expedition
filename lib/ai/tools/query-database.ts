@@ -20,7 +20,7 @@ export const queryDatabase = tool({
   execute: async ({ table, select, filters, limit }) => {
     try {
       const response = await fetch(
-        'https://YOUR_PROJECT_REF.functions.supabase.co/query-database',
+        'https://unwlycbkoyvfzhqfyvhk.supabase.co/functions/v1/query-on-edge'
         {
           method: 'POST',
           headers: {
