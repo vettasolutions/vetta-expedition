@@ -105,16 +105,7 @@ export async function POST(request: Request) {
                 ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_generateMessageId: generateUUID,
-          tools: {
-            getWeather,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({
-              session,
-              dataStream,
-            }),
-            ...supabaseTools,
-          },
+          tools: supabaseTools,
           onFinish: async ({ response }) => {
             // Close the MCP client
             await supabaseTools.client.close();
