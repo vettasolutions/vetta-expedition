@@ -4,9 +4,7 @@ import {
   createDataStreamResponse,
   smoothStream,
   streamText,
-  experimental_createMCPClient,
 } from 'ai';
-import { Experimental_StdioMCPTransport } from 'ai/mcp-stdio';
 import { auth } from '@/app/(auth)/auth';
 import { systemPrompt } from '@/lib/ai/prompts';
 import {
@@ -21,6 +19,14 @@ import {
   getTrailingMessageId,
 } from '@/lib/utils';
 import { generateTitleFromUserMessage } from '../../actions';
+
+import { createDocument } from '@/lib/ai/tools/create-document';
+import { updateDocument } from '@/lib/ai/tools/update-document';
+import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
+import { getWeather } from '@/lib/ai/tools/get-weather';
+import { queryDatabase } from '@/lib/ai/tools/query-database';
+import { sayHello } from '@/lib/ai/tools/say-hello';
+
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 
@@ -77,24 +83,6 @@ export async function POST(request: Request) {
       ],
     });
 
-    // Initialize the Supabase MCP client - directly in the route handler
-    const transport = new Experimental_StdioMCPTransport({
-      command: 'npx',
-      args: [
-        '-y',
-        '@supabase/mcp-server-supabase@latest',
-        '--access-token',
-        process.env.SUPABASE_ACCESS_TOKEN || '',
-      ],
-    });
-
-    const supabaseClient = await experimental_createMCPClient({
-      transport,
-    });
-
-    // Get Supabase tools
-    const supabaseTools = await supabaseClient.tools();
-
     return createDataStreamResponse({
       execute: (dataStream) => {
         const result = streamText({
@@ -102,13 +90,31 @@ export async function POST(request: Request) {
           system: systemPrompt({ selectedChatModel }),
           messages,
           maxSteps: 5,
+          experimental_activeTools:
+            selectedChatModel === 'chat-model-reasoning'
+              ? []
+              : [
+                  'getWeather',
+                  'createDocument',
+                  'updateDocument',
+                  'requestSuggestions',
+                  'sayHello',
+                  'queryDatabase',
+                ],
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_generateMessageId: generateUUID,
-          tools: supabaseTools,
+          tools: {
+            getWeather,
+            createDocument: createDocument({ session, dataStream }),
+            updateDocument: updateDocument({ session, dataStream }),
+            requestSuggestions: requestSuggestions({
+              session,
+              dataStream,
+            }),
+            sayHello,
+            queryDatabase,
+          },
           onFinish: async ({ response }) => {
-            // Close the Supabase client when done
-            await supabaseClient.close();
-
             if (session.user?.id) {
               try {
                 const assistantId = getTrailingMessageId({
@@ -157,8 +163,6 @@ export async function POST(request: Request) {
         });
       },
       onError: () => {
-        // Close client on error
-        supabaseClient.close().catch(e => console.error('Error closing client:', e));
         return 'Oops, an error occurred!';
       },
     });
