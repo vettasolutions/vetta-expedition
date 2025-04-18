@@ -8,7 +8,6 @@ import {
   CardDescription,
   CardContent
 } from '@/components/ui/card';
-import { generateUUID } from '@/lib/utils';
 import { DEFAULT_CHAT_MODEL } from '@/lib/ai/models';
 
 type AgentCardProps = {
@@ -30,14 +29,11 @@ export function AgentCard({
     if (onClick) {
       onClick();
     } else {
-      // Generate a new chat ID and navigate to the chat interface
-      const chatId = generateUUID();
-      
       // Set the model cookie before navigating
       document.cookie = `chat-model=${modelId}; path=/; max-age=${60 * 60 * 24 * 7}`;
       
       // Navigate to the chat interface
-      router.push(`/chat/${chatId}`);
+      router.push('/chat');
     }
   };
 
