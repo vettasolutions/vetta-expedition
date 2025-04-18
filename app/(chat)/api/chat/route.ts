@@ -6,7 +6,7 @@ import {
   streamText,
 } from 'ai';
 import { auth } from '@/app/(auth)/auth';
-import { systemPrompt } from '@/lib/ai/prompts';
+import { rfqSystemPrompt, systemPrompt } from '@/lib/ai/prompts';
 import {
   deleteChatById,
   getChatById,
@@ -25,6 +25,7 @@ import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { sayHello } from '@/lib/ai/tools/say-hello';
 import { searchProduct } from '@/lib/ai/tools/search_product';
+import { searchAntibody } from '@/lib/ai/tools/search_antibody';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 
@@ -85,7 +86,7 @@ export async function POST(request: Request) {
       execute: (dataStream) => {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel }),
+          system: rfqSystemPrompt,
           messages,
           maxSteps: 5,
           experimental_transform: smoothStream({ chunking: 'word' }),
@@ -96,6 +97,7 @@ export async function POST(request: Request) {
             requestSuggestions: requestSuggestions({ session, dataStream }),
             sayHello,
             searchProduct,
+            searchAntibody,
           },
           onFinish: async ({ response }) => {
             if (session.user?.id) {
