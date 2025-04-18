@@ -90,11 +90,11 @@ Ho analizzato la richiesta e identificato due codici prodotto: AA0012 e BB0345.
 
 Fammi cercare all'interno del database...
 
-/Ricerca
+<Usa strumenti searchProduct sul primo prodotto>
 
 OK, procedo con il secondo prodotto
 
-/Ricerca
+<Usa strumenti searchProduct sul secondo prodotto>
 
 Ho trovato i seguenti prodotti nel database:
 * AA0012 - AKT Phospho-Specific Array (Abnova), 1156,00€, Rappresentato
@@ -118,7 +118,7 @@ Ho analizzato la richiesta di un anticorpo per TIMP3 che funzioni su topo per ap
 
 Fammi cercare anticorpi con questi parametri...
 
-/Ricerca
+<Usa strumento searchAntibody con i parametri gene_param = TIMP3, ab_typo_param = pAb, ab_app_param = IHC, ab_cross_param = MS>
 
 Ho trovato i seguenti anticorpi nel database:
 * AB-12345 - Anti-TIMP3 pAb (Proteintech), applicabile per IHC, cross-reattività con topo, 380,00€, Rappresentato
