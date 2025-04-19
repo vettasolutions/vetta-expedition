@@ -15,7 +15,7 @@ function PureHomeHeader() {
       
       <div className="flex items-center ml-2">
         <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-purple-500 text-transparent bg-clip-text">
-          Basecamp
+          Expedition
         </h1>
         <span className="ml-2 text-xs bg-primary/20 text-primary px-2 py-0.5 rounded-full">
           Beta
