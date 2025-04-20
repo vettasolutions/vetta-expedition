@@ -1,0 +1,22 @@
+Schema Name,Table Name,Field Name,Data Type,Description,Sample Values,Required?,Notes,Data Quality Checks,PII
+stoplight_analytics,organizations,id,bigint,Primary key identifier for the organization,1,No,Source: ps_network.organizations.id,"NOT NULL, Positive integer, Unique",No
+stoplight_analytics,organizations,name,character varying,Name of the organization,Foundation for Poverty Alleviation,No,Source: ps_network.organizations.name,"NOT NULL, Length check (max 200)",No
+stoplight_analytics,organizations,description,text,Detailed description of the organization,Non-profit organization dedicated to eliminating poverty through innovative methodologies,No,Source: ps_network.organizations.description,"Length check (max 2000)",No
+stoplight_analytics,organizations,is_active,boolean,Indicates if the organization is currently active,True,No,Source: ps_network.organizations.is_active,"Boolean value check, Default: true",No
+stoplight_analytics,organizations,created_at,bigint,Unix timestamp of creation,1625097600,No,Source: ps_network.organizations.created_at,"Valid Unix timestamp, Not in future",No
+stoplight_analytics,organizations,updated_at,bigint,Unix timestamp of last update,1625097600,No,Source: ps_network.organizations.updated_at,"Valid Unix timestamp, >= created_at",No
+stoplight_analytics,organizations,country,character varying,Country where the organization is located,PY,No,Source: ps_network.organizations.country,"ISO country code format, Length check (2)",No
+stoplight_analytics,organizations,type,character varying,Type of organization,"NGO, BUSINESS, GOVERNMENT",No,Source: ps_network.organizations.type,"Enumeration check (NGO, BUSINESS, GOVERNMENT, ACADEMIC, OTHER)",No
+stoplight_analytics,organizations,logo_url,character varying,URL to the organization's logo,https://example.com/images/org_logo.png,No,Source: ps_network.organizations.logo_url,"URL format check, Image domain validation",No
+stoplight_analytics,organizations,website,character varying,Organization's website URL,https://example.org,No,Source: ps_network.organizations.website,"URL format check, Length check (max 255)",No
+stoplight_analytics,organizations,address,character varying,Physical address of the organization,"123 Main St, Asuncion, Paraguay",No,Source: ps_network.organizations.address,"Length check (max 500)",Yes
+stoplight_analytics,organizations,phone,character varying,Contact phone number for the organization,+595 21 123 4567,No,Source: ps_network.organizations.phone,"Phone number format check, Length check (max 50)",Yes
+stoplight_analytics,organizations,email,character varying,Contact email for the organization,contact@example.org,No,Source: ps_network.organizations.email,"Email format check, Length check (max 100)",Yes
+stoplight_analytics,organizations,parent_id,bigint,Reference to the parent organization (if any),null,No,Source: ps_network.organizations.parent_id,"Positive integer, FK validation to ps_network.organizations",No
+stoplight_analytics,organizations,latitude,double precision,Latitude coordinate of the organization's location,-25.2819,No,Source: ps_network.organizations.latitude,"Latitude range check (-90 to 90)",No
+stoplight_analytics,organizations,longitude,double precision,Longitude coordinate of the organization's location,-57.6351,No,Source: ps_network.organizations.longitude,"Longitude range check (-180 to 180)",No
+stoplight_analytics,organizations,timezone,character varying,Timezone of the organization's location,America/Asuncion,No,Source: ps_network.organizations.timezone,"Valid timezone identifier, Length check (max 50)",No
+stoplight_analytics,organizations,created_by,character varying,User who created the record,admin,No,Source: ps_network.organizations.created_by,"Length check (max 255)",Yes
+stoplight_analytics,organizations,last_modified_by,character varying,User who last modified the record,admin,No,Source: ps_network.organizations.last_modified_by,"Length check (max 255)",Yes
+stoplight_analytics,organizations,created_date,timestamp without time zone,Timestamp when the record was created,2023-03-15 12:30:00,No,Source: ps_network.organizations.created_date,"Valid timestamp, Not in future",No
+stoplight_analytics,organizations,last_modified_date,timestamp without time zone,Timestamp of the last modification,2023-03-15 12:30:00,No,Source: ps_network.organizations.last_modified_date,"Valid timestamp, Not in future, >= created_date",No 

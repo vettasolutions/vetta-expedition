@@ -1,0 +1,23 @@
+Schema Name,Table Name,Field Name,Data Type,Description,Sample Values,Required?,Notes,Data Quality Checks,PII
+stoplight_analytics,stoplight_indicator,id,bigint,Primary key identifier for the stoplight indicator,1,No,Source: library.stoplight_indicator.id,"NOT NULL, Positive integer, Unique",No
+stoplight_analytics,stoplight_indicator,code_name,character varying,Code identifier for the indicator,income,No,Source: library.stoplight_indicator.code_name,"NOT NULL, Alphanumeric, Lowercase, No spaces",No
+stoplight_analytics,stoplight_indicator,short_name,character varying,Short display name for the indicator,Income,No,Source: library.stoplight_indicator.short_name,"NOT NULL, Length check (max 50)",No
+stoplight_analytics,stoplight_indicator,question_text,character varying,The question text displayed for this indicator,What is your family's income level?,No,Source: library.stoplight_indicator.question_text,"NOT NULL, Length check (max 500)",No
+stoplight_analytics,stoplight_indicator,definition,character varying,Detailed definition of the indicator,The amount of money earned by the family monthly,No,Source: library.stoplight_indicator.definition,"Length check (max 1000), Non-empty value",No
+stoplight_analytics,stoplight_indicator,status,character varying,Current status of the indicator,"ACTIVE, INACTIVE",No,Source: library.stoplight_indicator.status,"Enumeration check (ACTIVE, INACTIVE, DEPRECATED)",No
+stoplight_analytics,stoplight_indicator,lang,character varying,Language code for the indicator content,en,No,Source: library.stoplight_indicator.lang,"ISO language code format, Length check (2-5)",No
+stoplight_analytics,stoplight_indicator,country,character varying,Country code the indicator is applicable to,PY,No,Source: library.stoplight_indicator.country,"ISO country code format, Length check (2)",No
+stoplight_analytics,stoplight_indicator,measurement_unit,character varying,Unit of measurement for the indicator,USD,No,Source: library.stoplight_indicator.measurement_unit,"Enumeration check for standard units, Length check (max 20)",No
+stoplight_analytics,stoplight_indicator,tag,character varying,Tag for categorization,ECONOMIC,No,Source: library.stoplight_indicator.tag,"Enumeration check, Uppercase format",No
+stoplight_analytics,stoplight_indicator,zones,jsonb,JSON array of applicable zones/regions,["CENTRAL", "EAST"],No,Source: library.stoplight_indicator.zones,"Valid JSON array, Non-empty check",No
+stoplight_analytics,stoplight_indicator,targets,jsonb,JSON array of targets for the indicator,["FAMILIES", "BUSINESSES"],No,Source: library.stoplight_indicator.targets,"Valid JSON array, Enumeration check for values",No
+stoplight_analytics,stoplight_indicator,stoplight_dimension_id,bigint,Reference to the dimension the indicator belongs to,1,No,Source: library.stoplight_indicator.stoplight_dimension_id,"Positive integer, FK validation",No
+stoplight_analytics,stoplight_indicator,verified,boolean,Indicates if the indicator has been verified/approved,True,No,Source: library.stoplight_indicator.verified,"Boolean value check, Default: false",No
+stoplight_analytics,stoplight_indicator,description,character varying,Additional description or context for the indicator,This indicator measures the family's monthly income level,No,Source: library.stoplight_indicator.description,"Length check (max 2000)",No
+stoplight_analytics,stoplight_indicator,stoplight_type,character varying,Type of stoplight methodology used,STANDARD,No,Source: library.stoplight_indicator.stoplight_type,"Enumeration check (STANDARD, CUSTOM, etc.)",No
+stoplight_analytics,stoplight_indicator,created_at,bigint,Unix timestamp of creation date,1625097600,No,Source: library.stoplight_indicator.created_at,"Valid Unix timestamp, Not in future",No
+stoplight_analytics,stoplight_indicator,created_by,character varying,User who created the indicator,admin,No,Source: library.stoplight_indicator.created_by,"Length check (max 100)",No
+stoplight_analytics,stoplight_indicator,updated_at,bigint,Unix timestamp of last update,1625097600,No,Source: library.stoplight_indicator.updated_at,"Valid Unix timestamp, >= created_at",No
+stoplight_analytics,stoplight_indicator,updated_by,character varying,User who last updated the indicator,admin,No,Source: library.stoplight_indicator.updated_by,"Length check (max 100)",No
+stoplight_analytics,stoplight_indicator,dynamo_id,character varying,Legacy ID reference from DynamoDB,ind_5f7b2a,No,Source: library.stoplight_indicator.dynamo_id,"Format check (alphanumeric), Uniqueness validation",No
+stoplight_analytics,stoplight_indicator,generic,boolean,Indicates if this is a generic indicator that can be used globally,True,No,Source: library.stoplight_indicator.generic,"Boolean value check, Default: false",No 

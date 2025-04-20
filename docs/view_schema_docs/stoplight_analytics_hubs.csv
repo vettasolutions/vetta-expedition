@@ -1,0 +1,23 @@
+Schema Name,Table Name,Field Name,Data Type,Description,Sample Values,Required?,Notes,Data Quality Checks,PII
+stoplight_analytics,hubs,id,bigint,Primary key identifier for the hub,1,No,Source: ps_network.applications.id,"NOT NULL, Positive integer, Unique",No
+stoplight_analytics,hubs,name,character varying,Name of the hub,Paraguay Central Hub,No,Source: ps_network.applications.name,"NOT NULL, Length check (max 200)",No
+stoplight_analytics,hubs,description,text,Detailed description of the hub,Central coordination hub for Paraguay operations implementing the Poverty Stoplight methodology,No,Source: ps_network.applications.description,"Length check (max 2000)",No
+stoplight_analytics,hubs,is_active,boolean,Indicates if the hub is currently active,True,No,Source: ps_network.applications.is_active,"Boolean value check, Default: true",No
+stoplight_analytics,hubs,created_at,bigint,Unix timestamp of creation,1625097600,No,Source: ps_network.applications.created_at,"Valid Unix timestamp, Not in future",No
+stoplight_analytics,hubs,updated_at,bigint,Unix timestamp of last update,1625097600,No,Source: ps_network.applications.updated_at,"Valid Unix timestamp, >= created_at",No
+stoplight_analytics,hubs,organization_id,bigint,Reference to the parent organization,1,No,Source: ps_network.applications.organization_id,"NOT NULL, Positive integer, FK validation to ps_network.organizations",No
+stoplight_analytics,hubs,country,character varying,Country where the hub is located,PY,No,Source: ps_network.applications.country,"ISO country code format, Length check (2)",No
+stoplight_analytics,hubs,logo_url,character varying,URL to the hub's logo,https://example.com/images/hub_logo.png,No,Source: ps_network.applications.logo_url,"URL format check, Image domain validation",No
+stoplight_analytics,hubs,website,character varying,Hub's website URL,https://paraguay.example.org,No,Source: ps_network.applications.website,"URL format check, Length check (max 255)",No
+stoplight_analytics,hubs,address,character varying,Physical address of the hub,"456 Center St, Asuncion, Paraguay",No,Source: ps_network.applications.address,"Length check (max 500)",Yes
+stoplight_analytics,hubs,phone,character varying,Contact phone number for the hub,+595 21 234 5678,No,Source: ps_network.applications.phone,"Phone number format check, Length check (max 50)",Yes
+stoplight_analytics,hubs,email,character varying,Contact email for the hub,paraguay@example.org,No,Source: ps_network.applications.email,"Email format check, Length check (max 100)",Yes
+stoplight_analytics,hubs,latitude,double precision,Latitude coordinate of the hub's location,-25.2819,No,Source: ps_network.applications.latitude,"Latitude range check (-90 to 90)",No
+stoplight_analytics,hubs,longitude,double precision,Longitude coordinate of the hub's location,-57.6351,No,Source: ps_network.applications.longitude,"Longitude range check (-180 to 180)",No
+stoplight_analytics,hubs,timezone,character varying,Timezone of the hub's location,America/Asuncion,No,Source: ps_network.applications.timezone,"Valid timezone identifier, Length check (max 50)",No
+stoplight_analytics,hubs,created_by,character varying,User who created the record,admin,No,Source: ps_network.applications.created_by,"Length check (max 255)",Yes
+stoplight_analytics,hubs,last_modified_by,character varying,User who last modified the record,admin,No,Source: ps_network.applications.last_modified_by,"Length check (max 255)",Yes
+stoplight_analytics,hubs,created_date,timestamp without time zone,Timestamp when the record was created,2023-03-15 12:30:00,No,Source: ps_network.applications.created_date,"Valid timestamp, Not in future",No
+stoplight_analytics,hubs,last_modified_date,timestamp without time zone,Timestamp of the last modification,2023-03-15 12:30:00,No,Source: ps_network.applications.last_modified_date,"Valid timestamp, Not in future, >= created_date",No
+stoplight_analytics,hubs,hub_type,character varying,Type of hub,"REGIONAL, COUNTRY, LOCAL",No,Source: ps_network.applications.hub_type,"Enumeration check (REGIONAL, COUNTRY, LOCAL, PARTNER)",No
+stoplight_analytics,hubs,parent_id,bigint,Reference to the parent hub (if any),null,No,Source: ps_network.applications.parent_id,"Positive integer, FK validation to ps_network.applications",No 

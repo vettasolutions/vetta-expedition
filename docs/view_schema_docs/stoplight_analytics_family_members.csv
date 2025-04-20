@@ -1,0 +1,23 @@
+Schema Name,Table Name,Field Name,Data Type,Description,Sample Values,Required?,Notes,Data Quality Checks,PII
+stoplight_analytics,family_members,id,bigint,Primary key identifier for the family member,1,No,Source: ps_families.family_members.id,"NOT NULL, Positive integer, Unique",No
+stoplight_analytics,family_members,gender,character varying,Gender of the family member,"M, F, O",No,Source: ps_families.family_members.gender,"Enumeration check (M, F, O, etc.), Length check (max 1)",Yes
+stoplight_analytics,family_members,birth_date,bigint,Unix timestamp of the member's birth date,315532800,No,Source: ps_families.family_members.birth_date,"Valid Unix timestamp, < current date, > 1900-01-01",Yes
+stoplight_analytics,family_members,document_type,character varying,Type of identification document,"ID, PASSPORT, BIRTH_CERTIFICATE",No,Source: ps_families.family_members.document_type,"Enumeration check, Length check (max 50)",No
+stoplight_analytics,family_members,birth_country,character varying,Country of birth,PY,No,Source: ps_families.family_members.birth_country,"ISO country code format, Length check (2)",Yes
+stoplight_analytics,family_members,email,character varying,Email address of the family member,john.doe@example.com,No,Source: ps_families.family_members.email,"Email format check, Length check (max 100)",Yes
+stoplight_analytics,family_members,family_id,bigint,Reference to the family the member belongs to,1,No,Source: ps_families.family_members.family_id,"Positive integer, FK validation to ps_families.family",No
+stoplight_analytics,family_members,first_participant,boolean,Indicates if this member is the primary participant in the family,True,No,Source: ps_families.family_members.first_participant,"Boolean value check, At least one TRUE per family_id",No
+stoplight_analytics,family_members,member_identifier,character varying,Unique identifier for the family member,MEM-12345,No,Source: ps_families.family_members.member_identifier,"Format check (alphanumeric), Unique constraint",No
+stoplight_analytics,family_members,date_of_birth,date,Date of birth in date format,1980-01-15,No,Source: ps_families.family_members.date_of_birth,"Valid date format, < current date, > 1900-01-01",Yes
+stoplight_analytics,family_members,document_type_text,character varying,Text description of the document type,National ID Card,No,Source: ps_families.family_members.document_type_text,"Length check (max 100)",No
+stoplight_analytics,family_members,custom_document_type,character varying,Custom document type if not in standard list,Local Tribal ID,No,Source: ps_families.family_members.custom_document_type,"Length check (max 100), Only populated if document_type is CUSTOM",No
+stoplight_analytics,family_members,gender_text,character varying,Text description of the gender,Male,No,Source: ps_families.family_members.gender_text,"Length check (max 50)",Yes
+stoplight_analytics,family_members,custom_gender,character varying,Custom gender value if not in standard list,Non-binary,No,Source: ps_families.family_members.custom_gender,"Length check (max 50), Only populated if gender is CUSTOM",Yes
+stoplight_analytics,family_members,active,boolean,Indicates if the member record is active,True,No,Source: ps_families.family_members.active,"Boolean value check, Default: true",No
+stoplight_analytics,family_members,snapshot_id,bigint,Reference to the snapshot when this member was recorded,1,No,Source: ps_families.family_members.snapshot_id,"Positive integer, FK validation to data_collect.snapshot",No
+stoplight_analytics,family_members,phone_code,character varying,Country phone code,+595,No,Source: ps_families.family_members.phone_code,"Format check (starts with +, numeric), Length check (max 10)",Yes
+stoplight_analytics,family_members,created_by,character varying,User who created the record,admin,No,Source: ps_families.family_members.created_by,"Length check (max 255)",Yes
+stoplight_analytics,family_members,last_modified_by,character varying,User who last modified the record,admin,No,Source: ps_families.family_members.last_modified_by,"Length check (max 255)",Yes
+stoplight_analytics,family_members,created_date,timestamp without time zone,Timestamp when the record was created,2023-03-15 12:30:00,No,Source: ps_families.family_members.created_date,"Valid timestamp, Not in future",No
+stoplight_analytics,family_members,last_modified_date,timestamp without time zone,Timestamp of the last modification,2023-03-15 12:30:00,No,Source: ps_families.family_members.last_modified_date,"Valid timestamp, Not in future, >= created_date",No
+stoplight_analytics,family_members,anonymous,boolean,Indicates if the member data is anonymized,False,No,Source: ps_families.family_members.anonymous,"Boolean value check, Default: false",No 

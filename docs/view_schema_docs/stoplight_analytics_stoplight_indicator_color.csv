@@ -1,0 +1,13 @@
+Schema Name,Table Name,Field Name,Data Type,Description,Sample Values,Required?,Notes,Data Quality Checks,PII
+stoplight_analytics,stoplight_indicator_color,id,bigint,Primary key identifier for the indicator color definition,1,No,Source: library.stoplight_indicator_color.id,"NOT NULL, Positive integer, Unique",No
+stoplight_analytics,stoplight_indicator_color,stoplight_indicator_id,bigint,Reference to the stoplight indicator,1,No,Source: library.stoplight_indicator_color.stoplight_indicator_id,"NOT NULL, Positive integer, FK validation to library.stoplight_indicator",No
+stoplight_analytics,stoplight_indicator_color,color,smallint,Color code (1=Red, 2=Yellow, 3=Green),"1, 2, 3",No,Source: library.stoplight_indicator_color.color,"Range check (1-3), NOT NULL",No
+stoplight_analytics,stoplight_indicator_color,description,text,Description of what this color means for this indicator,Red: Family has no source of income or unstable very low income,No,Source: library.stoplight_indicator_color.description,"NOT NULL, Length check (max 1000)",No
+stoplight_analytics,stoplight_indicator_color,created_at,bigint,Unix timestamp of creation,1625097600,No,Source: library.stoplight_indicator_color.created_at,"Valid Unix timestamp, Not in future",No
+stoplight_analytics,stoplight_indicator_color,created_by,character varying,User who created the record,admin,No,Source: library.stoplight_indicator_color.created_by,"Length check (max 100)",No
+stoplight_analytics,stoplight_indicator_color,updated_at,bigint,Unix timestamp of last update,1625097600,No,Source: library.stoplight_indicator_color.updated_at,"Valid Unix timestamp, >= created_at",No
+stoplight_analytics,stoplight_indicator_color,updated_by,character varying,User who last updated the record,admin,No,Source: library.stoplight_indicator_color.updated_by,"Length check (max 100)",No
+stoplight_analytics,stoplight_indicator_color,organization_id,bigint,Reference to the organization,1,No,Source: library.stoplight_indicator_color.organization_id,"Positive integer, FK validation to ps_network.organizations",No
+stoplight_analytics,stoplight_indicator_color,application_id,bigint,Reference to the application (hub),1,No,Source: library.stoplight_indicator_color.application_id,"Positive integer, FK validation to ps_network.applications",No
+stoplight_analytics,stoplight_indicator_color,title,character varying,Short title for this color definition,No Income,No,Source: library.stoplight_indicator_color.title,"Length check (max 100)",No
+stoplight_analytics,stoplight_indicator_color,image_url,character varying,URL to an image illustrating this indicator state,https://example.com/images/red_income.jpg,No,Source: library.stoplight_indicator_color.image_url,"URL format check, Length check (max 500)",No 

@@ -1,0 +1,29 @@
+Schema Name,Table Name,Field Name,Data Type,Description,Sample Values,Required?,Notes,Data Quality Checks,PII
+stoplight_analytics,family,family_id,bigint,Primary key identifier for the family,1,No,Source: ps_families.family.family_id,"NOT NULL, Positive integer, Unique",No
+stoplight_analytics,family,country,bigint,Reference to the country where the family is located,1,No,Source: ps_families.family.country,"Positive integer, FK validation to system.countries",No
+stoplight_analytics,family,location_type,character varying,Type of location (e.g. urban, rural),Urban,No,"Source: Added in view, not in source table","Enumeration check (Urban, Rural, Semi-urban)",No
+stoplight_analytics,family,location_position_gps,character varying,GPS coordinates in a specific format,"(-25.2819, -57.6351)",No,"Source: Added in view, not in source table","GPS coordinate format check, Valid latitude/longitude range",Yes
+stoplight_analytics,family,application_id,bigint,Reference to the Hub implementing the Poverty Stoplight program,1,No,Source: ps_families.family.application_id,"Positive integer, FK validation to ps_network.applications",No
+stoplight_analytics,family,organization_id,bigint,Reference to the organization managing the family,1,No,Source: ps_families.family.organization_id,"Positive integer, FK validation to ps_network.organizations",No
+stoplight_analytics,family,code,character varying,Unique code assigned to the family,FAM-12345,No,Source: ps_families.family.code,"NOT NULL, Format check (alphanumeric), Unique within org",No
+stoplight_analytics,family,is_active,boolean,Indicates if the family is still active and was not deleted from the platform,True,No,Source: ps_families.family.is_active,"Boolean value check, Default: true",No
+stoplight_analytics,family,last_modified_at,timestamp with time zone,Timestamp of the last modification,2023-03-15 12:30:00+00,No,Source: ps_families.family.last_modified_at,"Valid timestamp, Not in future",No
+stoplight_analytics,family,image_url,character varying,URL to the family's image,https://example.com/images/family.jpg,No,"Source: Added in view, not in ps_families.family","URL format check, Image domain validation",No
+stoplight_analytics,family,user_id,bigint,Reference to the survey user associated with the family,1,No,Source: ps_families.family.user_id,"Positive integer, FK validation to security.users",No
+stoplight_analytics,family,family_identifier,character varying,Identifier for the family (may be name or code),FP12345,No,"Source: Added in view, not in source table","Length check (max 300), No special characters",Yes
+stoplight_analytics,family,count_family_members,bigint,Number of members in the family,5,No,Source: ps_families.family.count_family_members,"Range check (1-30), Positive integer",Yes
+stoplight_analytics,family,longitude,character varying,Longitude of the family's location,-57.6351,No,Source: ps_families.family.longitude,"Longitude range check (-180 to 180), Numeric value check",Yes
+stoplight_analytics,family,latitude,character varying,Latitude of the family's location,-25.2819,No,Source: ps_families.family.latitude,"Latitude range check (-90 to 90), Numeric value check",Yes
+stoplight_analytics,family,accuracy,character varying,GPS accuracy of the recorded location,5m,No,Source: ps_families.family.accuracy,"Format check (numeric + unit), Range check",No
+stoplight_analytics,family,address,character varying,Physical address of the family,123 Main St,No,Source: ps_families.family.address,"Length check (max 200), Special character validation",Yes
+stoplight_analytics,family,post_code,text,Postal code of the family's location,12345,No,Source: ps_families.family.post_code,"Format check (alphanumeric), Country-specific validation",Yes
+stoplight_analytics,family,project_id,bigint,Reference to the project the family is part of,1,No,Source: ps_families.family.project_id,"Positive integer, FK validation to ps_network.projects",No
+stoplight_analytics,family,family_user_id,bigint,Reference to the user managing the family's record,1,No,Source: ps_families.family.family_user_id,"Positive integer, FK validation to security.users",No
+stoplight_analytics,family,profile_picture_url,character varying,URL of the family's profile picture,https://example.com/images/profile.jpg,No,Source: ps_families.family.profile_picture_url,"URL format check, Image domain validation",No
+stoplight_analytics,family,created_by,character varying,User who created the record,admin,No,Source: ps_families.family.created_by,"Length check (max 255)",Yes
+stoplight_analytics,family,last_modified_by,character varying,User who last modified the record,admin,No,Source: ps_families.family.last_modified_by,"Length check (max 255)",Yes
+stoplight_analytics,family,created_date,timestamp without time zone,Timestamp when the record was created,2023-03-15 12:30:00,No,Source: ps_families.family.created_date,"Valid timestamp, Not in future",No
+stoplight_analytics,family,last_modified_date,timestamp without time zone,Timestamp of the last modification,2023-03-15 12:30:00,No,Source: ps_families.family.last_modified_date,"Valid timestamp, Not in future, >= created_date",No
+stoplight_analytics,family,legacy_family_code,character varying,Previous system identifier for the family,LEGACY-5678,No,Source: ps_families.family.legacy_family_code,"Format check (alphanumeric), Uniqueness validation",No
+stoplight_analytics,family,anonymous,boolean,Indicates if the family has completed an anonymous survey,False,No,Source: ps_families.family.anonymous,"Boolean value check, Default: false",No
+stoplight_analytics,family,family_baseline_date,timestamp without time zone,Date when the family's baseline survey was taken,2023-03-15 12:30:00,No,"Source: Added in view, not in source table","Valid timestamp, Not in future, <= current date",No 
