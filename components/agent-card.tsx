@@ -43,11 +43,11 @@ export function AgentCard({
       onClick={handleClick}
     >
       <div className="flex items-center justify-center w-[160px] min-w-[160px] bg-muted/30">
-        <div className="w-20 h-20 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
+        <div className="size-20 rounded-full bg-primary/10 flex items-center justify-center text-3xl font-bold text-primary">
           RFQ
         </div>
       </div>
-      <div className="flex flex-col flex-grow">
+      <div className="flex flex-col grow">
         <CardHeader className="pb-2">
           <CardTitle className="text-xl">{title}</CardTitle>
           {description && (
