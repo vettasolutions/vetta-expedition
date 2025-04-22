@@ -23,10 +23,7 @@ import { generateTitleFromUserMessage } from '../../actions';
 import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
-import { sayHello } from '@/lib/ai/tools/say-hello';
-import { searchProduct } from '@/lib/ai/tools/search_product';
-import { searchAntibody } from '@/lib/ai/tools/search_antibody';
-import { searchProductsByDescription } from '@/lib/ai/tools/search_products_by_description';
+import { searchProduct, searchAntibody, searchProductsByDescription } from '@/lib/ai/tools/supabase-tools';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 
@@ -96,7 +93,6 @@ export async function POST(request: Request) {
             createDocument: createDocument({ session, dataStream }),
             updateDocument: updateDocument({ session, dataStream }),
             requestSuggestions: requestSuggestions({ session, dataStream }),
-            sayHello,
             searchProduct,
             searchAntibody,
             searchProductsByDescription,
