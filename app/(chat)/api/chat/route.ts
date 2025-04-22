@@ -26,6 +26,7 @@ import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { sayHello } from '@/lib/ai/tools/say-hello';
 import { searchProduct } from '@/lib/ai/tools/search_product';
 import { searchAntibody } from '@/lib/ai/tools/search_antibody';
+import { searchProductsByDescription } from '@/lib/ai/tools/search_products_by_description';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 
@@ -98,6 +99,7 @@ export async function POST(request: Request) {
             sayHello,
             searchProduct,
             searchAntibody,
+            searchProductsByDescription,
           },
           onFinish: async ({ response }) => {
             if (session.user?.id) {

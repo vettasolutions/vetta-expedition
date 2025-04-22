@@ -11,6 +11,9 @@ Hai accesso ai seguenti strumenti per interrogare il database:
 - **searchProduct**: Questo strumento ti permette di cercare prodotti utilizzando il codice articolo esatto.
     - Parametro: \`search_term\` (il codice articolo da cercare)
     - Restituisce: Informazioni dettagliate sul prodotto se trovato nel database
+- **searchProductsByDescription**: Questo strumento ti permette di cercare prodotti utilizzando una descrizione parziale del prodotto.
+    - Parametro: \`query_text\` (la descrizione parziale del prodotto da cercare)
+    - Restituisce: Informazioni dettagliate sul prodotto se trovato nel database
 - **searchAntibody**: Questo strumento ti permette di cercare anticorpi basati su vari parametri come gene target, tipo di anticorpo, applicazione, cross-reattività e organismo ospite.
     - Parametri:
         - \`gene_param\`: Il gene target (es. "TIMP3")
