@@ -1,10 +1,12 @@
 'use client';
 
 import { useChat } from '@ai-sdk/react';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { artifactDefinitions, ArtifactKind } from './artifact';
-import { Suggestion } from '@/lib/db/schema';
+import type { Suggestion } from '@/lib/db/schema';
 import { initialArtifactData, useArtifact } from '@/hooks/use-artifact';
+import { Console } from './console';
+import type { ConsoleOutput } from './console';
 
 export type DataStreamDelta = {
   type:
@@ -25,6 +27,27 @@ export function DataStreamHandler({ id }: { id: string }) {
   const { data: dataStream } = useChat({ id });
   const { artifact, setArtifact, setMetadata } = useArtifact();
   const lastProcessedIndex = useRef(-1);
+  const [consoleOutputs, setConsoleOutputs] = useState<ConsoleOutput[]>([]);
+
+  // Listen for PSP tool execution updates
+  useEffect(() => {
+    const handlePspConsoleUpdate = () => {
+      if (typeof window !== 'undefined' && window.pspConsoleOutputs) {
+        // Update with the latest console outputs
+        setConsoleOutputs([...window.pspConsoleOutputs]);
+      }
+    };
+
+    // Initial check for any existing console outputs
+    handlePspConsoleUpdate();
+
+    // Listen for updates
+    window.addEventListener('psp-console-update', handlePspConsoleUpdate);
+
+    return () => {
+      window.removeEventListener('psp-console-update', handlePspConsoleUpdate);
+    };
+  }, []);
 
   useEffect(() => {
     if (!dataStream?.length) return;
@@ -92,5 +115,10 @@ export function DataStreamHandler({ id }: { id: string }) {
     });
   }, [dataStream, setArtifact, setMetadata, artifact]);
 
-  return null;
+  return (
+    <Console
+      consoleOutputs={consoleOutputs}
+      setConsoleOutputs={setConsoleOutputs}
+    />
+  );
 }

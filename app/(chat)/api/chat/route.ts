@@ -26,6 +26,8 @@ import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { sayHello } from '@/lib/ai/tools/say-hello';
 import { searchProduct } from '@/lib/ai/tools/search_product';
 import { searchAntibody } from '@/lib/ai/tools/search_antibody';
+import { trackIndicatorImprovementTool } from '@/lib/ai/tools/psp/psp_head/track_indicator_improvement';
+import { compareIndicatorStatusByCountryTool } from '@/lib/ai/tools/psp/psp_head/compare_indicator_status_by_country';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 
@@ -98,6 +100,9 @@ export async function POST(request: Request) {
             sayHello,
             searchProduct,
             searchAntibody,
+            trackIndicatorImprovement: trackIndicatorImprovementTool,
+            compareIndicatorStatusByCountry:
+              compareIndicatorStatusByCountryTool,
           },
           onFinish: async ({ response }) => {
             if (session.user?.id) {
