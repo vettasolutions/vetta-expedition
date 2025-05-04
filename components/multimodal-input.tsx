@@ -24,7 +24,7 @@ import equal from 'fast-deep-equal';
 import type { UseChatHelpers } from '@ai-sdk/react';
 import { generateUUID } from '@/lib/utils'; // Import generateUUID
 import { createClient } from '@/lib/supabase/client';
-import { UploadSuccessData } from '@/components/chat'; // Assuming type is exported from chat.tsx
+import type { UploadSuccessData } from '@/components/chat'; // Use type import
 
 // Define attachment state type
 interface ProcessingAttachment {
@@ -48,7 +48,7 @@ const UPLOAD_PATH = 'upload/pdf';
 
 async function uploadFileToSupabase(
   file: File,
-  onSuccess: (storagePath: string) => void,
+  onSuccess: (storagePath: string, publicUrl: string) => void,
   onError: (errorMsg: string) => void,
 ) {
   const supabase = createClient();
@@ -66,9 +66,27 @@ async function uploadFileToSupabase(
     if (error) {
       throw error;
     }
+    if (!data) {
+      throw new Error('Upload succeeded but no data returned.');
+    }
 
     console.log(`Upload successful for ${file.name}, path: ${data.path}`);
-    onSuccess(data.path);
+
+    // Get public URL
+    const { data: publicUrlData } = supabase.storage
+      .from(BUCKET_NAME)
+      .getPublicUrl(data.path);
+
+    if (!publicUrlData?.publicUrl) {
+      console.warn(
+        `Could not get public URL for ${data.path}. Proceeding without it.`,
+      );
+      // Pass an empty string if URL retrieval fails
+      onSuccess(data.path, '');
+    } else {
+      console.log(`Public URL for ${file.name}: ${publicUrlData.publicUrl}`);
+      onSuccess(data.path, publicUrlData.publicUrl); // Pass public URL
+    }
   } catch (error: any) {
     console.error(`Supabase upload error for ${file.name}:`, error);
     onError(error.message || 'Unknown upload error');
@@ -182,7 +200,7 @@ function PureMultimodalInput({
         // Trigger background upload
         await uploadFileToSupabase(
           file,
-          (storagePath) => {
+          (storagePath, publicUrl) => {
             // onSuccess
             updateAttachmentStatus(attachmentId, {
               uploadStatus: 'success',
@@ -190,7 +208,7 @@ function PureMultimodalInput({
             });
             toast.success(`${file.name} stored successfully!`);
             // Call the passed callback
-            onUploadSuccess({ name: file.name, storagePath });
+            onUploadSuccess({ name: file.name, storagePath, publicUrl });
           },
           (errorMsg) => {
             // onError
