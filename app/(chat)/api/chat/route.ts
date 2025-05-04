@@ -4,6 +4,7 @@ import {
   createDataStreamResponse,
   smoothStream,
   streamText,
+  CoreMessage,
 } from 'ai';
 import { auth } from '@/app/(auth)/auth';
 import { systemPrompt } from '@/lib/ai/prompts';
@@ -23,7 +24,11 @@ import { generateTitleFromUserMessage } from '../../actions';
 import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
-import { searchProduct, searchAntibody, searchProductsByDescription } from '@/lib/ai/tools/supabase-tools';
+import {
+  searchProduct,
+  searchAntibody,
+  searchProductsByDescription,
+} from '@/lib/ai/tools/supabase-tools';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 
@@ -57,7 +62,10 @@ export async function POST(request: Request) {
 
     if (!chat) {
       const title = await generateTitleFromUserMessage({
-        message: userMessage,
+        message: {
+          ...userMessage,
+          content: userMessage.content ?? '',
+        },
       });
 
       await saveChat({ id, userId: session.user.id, title });
@@ -67,14 +75,58 @@ export async function POST(request: Request) {
       }
     }
 
+    const coreMessages: CoreMessage[] = messages.map((message) => {
+      const userParts =
+        message.role === 'user' && Array.isArray(message.parts)
+          ? message.parts
+          : [];
+      const fileParts = userParts.filter(
+        (part: any) => part.type === 'file' && part.data_base64,
+      );
+      const textPart = userParts.find((part: any) => part.type === 'text');
+      const textContent =
+        textPart?.value ||
+        (typeof message.content === 'string' ? message.content : '') ||
+        '';
+
+      if (message.id === userMessage.id && fileParts.length > 0) {
+        return {
+          role: 'user',
+          content: [
+            { type: 'text', text: textContent },
+            ...fileParts.map((part: any) => ({
+              type: 'file' as const,
+              data: Buffer.from(part.data_base64, 'base64'),
+              mimeType: part.mimeType,
+              name: part.name,
+            })),
+          ],
+        };
+      }
+
+      return {
+        role: message.role,
+        content: textContent || (message.content ?? ''),
+      } as CoreMessage;
+    });
+
+    const dbAttachments = (userMessage.parts ?? [])
+      .filter((part: any) => part.type === 'file')
+      .map((part: any) => ({
+        name: part.name,
+        contentType: part.mimeType,
+      }));
+
     await saveMessages({
       messages: [
         {
           chatId: id,
           id: userMessage.id,
           role: 'user',
-          parts: userMessage.parts,
-          attachments: userMessage.experimental_attachments ?? [],
+          parts: (userMessage.parts ?? []).filter(
+            (part: any) => part.type === 'text',
+          ),
+          attachments: dbAttachments,
           createdAt: new Date(),
         },
       ],
@@ -85,7 +137,7 @@ export async function POST(request: Request) {
         const result = streamText({
           model: myProvider.languageModel(selectedChatModel),
           system: systemPrompt,
-          messages,
+          messages: coreMessages,
           maxSteps: 5,
           experimental_transform: smoothStream({ chunking: 'word' }),
           experimental_generateMessageId: generateUUID,
@@ -111,7 +163,7 @@ export async function POST(request: Request) {
                 }
 
                 const [, assistantMessage] = appendResponseMessages({
-                  messages: [userMessage],
+                  messages: coreMessages,
                   responseMessages: response.messages,
                 });
 
@@ -121,15 +173,24 @@ export async function POST(request: Request) {
                       id: assistantId,
                       chatId: id,
                       role: assistantMessage.role,
-                      parts: assistantMessage.parts,
-                      attachments:
-                        assistantMessage.experimental_attachments ?? [],
+                      parts: Array.isArray(assistantMessage.content)
+                        ? assistantMessage.content.map((part) => ({
+                            type: part.type,
+                            value: (part as any).text || '',
+                          }))
+                        : [
+                            {
+                              type: 'text',
+                              value: assistantMessage.content ?? '',
+                            },
+                          ],
+                      attachments: [],
                       createdAt: new Date(),
                     },
                   ],
                 });
-              } catch (_) {
-                console.error('Failed to save chat');
+              } catch (error) {
+                console.error('Failed to save assistant message:', error);
               }
             }
           },
@@ -145,13 +206,15 @@ export async function POST(request: Request) {
           sendReasoning: true,
         });
       },
-      onError: () => {
+      onError: (error) => {
+        console.error('Error in streamText execution:', error);
         return 'Oops, an error occurred!';
       },
     });
   } catch (error) {
+    console.error('Error in POST /api/chat:', error);
     return new Response('An error occurred while processing your request!', {
-      status: 404,
+      status: 500,
     });
   }
 }

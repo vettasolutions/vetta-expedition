@@ -1,7 +1,18 @@
 import 'server-only';
 
 import { genSaltSync, hashSync } from 'bcrypt-ts';
-import { and, asc, desc, eq, gt, gte, inArray, lt, SQL } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  desc,
+  eq,
+  gt,
+  gte,
+  inArray,
+  lt,
+  SQL,
+  sql,
+} from 'drizzle-orm';
 import { drizzle } from 'drizzle-orm/postgres-js';
 import postgres from 'postgres';
 
@@ -402,6 +413,40 @@ export async function updateChatVisiblityById({
     return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
   } catch (error) {
     console.error('Failed to update chat visibility in database');
+    throw error;
+  }
+}
+
+// Function to update the attachments field of a specific message
+export async function updateMessageAttachments({
+  messageId,
+  attachments,
+}: {
+  messageId: string;
+  attachments: any; // Use `any` for now, ideally define a specific type for DB attachments
+}) {
+  try {
+    console.log(
+      `Updating attachments for messageId: ${messageId}`,
+      attachments,
+    );
+    const result = await db
+      .update(message)
+      .set({ attachments: sql`'${JSON.stringify(attachments)}'::jsonb` })
+      .where(eq(message.id, messageId))
+      .returning(); // Optional: return updated record
+
+    if (result.length === 0) {
+      console.warn(
+        `No message found with ID ${messageId} to update attachments.`,
+      );
+    }
+    return result;
+  } catch (error) {
+    console.error(
+      `Failed to update attachments for message ${messageId} in database`,
+      error,
+    );
     throw error;
   }
 }
