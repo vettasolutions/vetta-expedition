@@ -46,6 +46,7 @@ type ChatStatus = 'idle' | 'awaiting_response' | 'in_progress';
 const BUCKET_NAME = 'testing';
 const UPLOAD_PATH = 'upload/pdf';
 
+// REMOVE traceable wrapper from this function
 async function uploadFileToSupabase(
   file: File,
   onSuccess: (storagePath: string, publicUrl: string) => void,
@@ -60,7 +61,7 @@ async function uploadFileToSupabase(
       .from(BUCKET_NAME)
       .upload(filePath, file, {
         cacheControl: '3600',
-        upsert: false, // Don't overwrite existing files (though timestamp makes it unlikely)
+        upsert: false,
       });
 
     if (error) {
@@ -81,7 +82,6 @@ async function uploadFileToSupabase(
       console.warn(
         `Could not get public URL for ${data.path}. Proceeding without it.`,
       );
-      // Pass an empty string if URL retrieval fails
       onSuccess(data.path, '');
     } else {
       console.log(`Public URL for ${file.name}: ${publicUrlData.publicUrl}`);
@@ -92,6 +92,7 @@ async function uploadFileToSupabase(
     onError(error.message || 'Unknown upload error');
   }
 }
+// END of removed wrapper
 
 // Helper function to convert ArrayBuffer to Base64 string
 function arrayBufferToBase64(buffer: ArrayBuffer): string {

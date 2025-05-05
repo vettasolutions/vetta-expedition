@@ -1,6 +1,7 @@
 import { tool } from 'ai';
-import { z } from 'zod';
+import type { z } from 'zod';
 import { supabaseConnector } from './connector';
+import { traceable } from 'langsmith/traceable';
 
 type SupabaseToolConfig = {
   description: string;
@@ -26,7 +27,17 @@ export function createSupabaseTool(config: SupabaseToolConfig) {
       );
 
       const mappedParams = parameterMapping ? parameterMapping(params) : params;
-      return await supabaseConnector.callFunction(functionPath, mappedParams);
+
+      // Wrap the Supabase function call with traceable
+      const traceWrappedFunction = traceable(
+        async (funcPath: string, funcParams: any) => {
+          return await supabaseConnector.callFunction(funcPath, funcParams);
+        },
+        { name: functionPath }, // Use functionPath as the span name in LangSmith
+      );
+
+      // Execute the wrapped function
+      return await traceWrappedFunction(functionPath, mappedParams);
     },
   });
 }

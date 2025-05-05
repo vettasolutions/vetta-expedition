@@ -1,10 +1,10 @@
 import {
-  UIMessage,
+  type UIMessage,
   appendResponseMessages,
   createDataStreamResponse,
   smoothStream,
   streamText,
-  CoreMessage,
+  type CoreMessage,
 } from 'ai';
 import { auth } from '@/app/(auth)/auth';
 import { systemPrompt } from '@/lib/ai/prompts';
@@ -85,7 +85,7 @@ export async function POST(request: Request) {
       );
       const textPart = userParts.find((part: any) => part.type === 'text');
       const textContent =
-        textPart?.value ||
+        (textPart as any)?.text ||
         (typeof message.content === 'string' ? message.content : '') ||
         '';
 
@@ -162,33 +162,39 @@ export async function POST(request: Request) {
                   throw new Error('No assistant message found!');
                 }
 
-                const [, assistantMessage] = appendResponseMessages({
-                  messages: coreMessages,
-                  responseMessages: response.messages,
-                });
+                const finalAssistantCoreMessage =
+                  response.messages[response.messages.length - 1];
 
-                await saveMessages({
-                  messages: [
-                    {
-                      id: assistantId,
-                      chatId: id,
-                      role: assistantMessage.role,
-                      parts: Array.isArray(assistantMessage.content)
-                        ? assistantMessage.content.map((part) => ({
-                            type: part.type,
-                            value: (part as any).text || '',
-                          }))
-                        : [
-                            {
-                              type: 'text',
-                              value: assistantMessage.content ?? '',
-                            },
-                          ],
-                      attachments: [],
-                      createdAt: new Date(),
-                    },
-                  ],
-                });
+                if (finalAssistantCoreMessage?.role !== 'assistant') {
+                  console.error(
+                    "Last message wasn't from assistant",
+                    finalAssistantCoreMessage,
+                  );
+                  throw new Error(
+                    'Could not extract assistant message content',
+                  );
+                }
+
+                let assistantTextContent = '';
+                if (typeof finalAssistantCoreMessage.content === 'string') {
+                  assistantTextContent = finalAssistantCoreMessage.content;
+                } else if (Array.isArray(finalAssistantCoreMessage.content)) {
+                  const textPart = finalAssistantCoreMessage.content.find(
+                    (part) => part.type === 'text',
+                  );
+                  assistantTextContent = (textPart as any)?.text ?? '';
+                }
+
+                const messageToSave = {
+                  id: assistantId,
+                  chatId: id,
+                  role: 'assistant' as const,
+                  parts: [{ type: 'text', value: assistantTextContent }],
+                  attachments: [],
+                  createdAt: new Date(),
+                };
+
+                await saveMessages({ messages: [messageToSave] });
               } catch (error) {
                 console.error('Failed to save assistant message:', error);
               }
@@ -201,7 +207,6 @@ export async function POST(request: Request) {
         });
 
         result.consumeStream();
-
         result.mergeIntoDataStream(dataStream, {
           sendReasoning: true,
         });
