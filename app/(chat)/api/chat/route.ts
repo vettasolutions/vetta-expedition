@@ -31,198 +31,223 @@ import {
 } from '@/lib/ai/tools/supabase-tools';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
+import { traceable } from 'langsmith/traceable';
 
 export const maxDuration = 60;
 
-export async function POST(request: Request) {
-  try {
-    const {
-      id,
-      messages,
-      selectedChatModel,
-    }: {
-      id: string;
-      messages: Array<UIMessage>;
-      selectedChatModel: string;
-    } = await request.json();
+export const POST = traceable(
+  async (request: Request) => {
+    try {
+      const {
+        id,
+        messages,
+        selectedChatModel,
+      }: {
+        id: string;
+        messages: Array<UIMessage>;
+        selectedChatModel: string;
+      } = await request.json();
 
-    const session = await auth();
+      const session = await auth();
 
-    if (!session || !session.user || !session.user.id) {
-      return new Response('Unauthorized', { status: 401 });
-    }
-
-    const userMessage = getMostRecentUserMessage(messages);
-
-    if (!userMessage) {
-      return new Response('No user message found', { status: 400 });
-    }
-
-    const chat = await getChatById({ id });
-
-    if (!chat) {
-      const title = await generateTitleFromUserMessage({
-        message: {
-          ...userMessage,
-          content: userMessage.content ?? '',
-        },
-      });
-
-      await saveChat({ id, userId: session.user.id, title });
-    } else {
-      if (chat.userId !== session.user.id) {
+      if (!session || !session.user || !session.user.id) {
         return new Response('Unauthorized', { status: 401 });
       }
-    }
 
-    const coreMessages: CoreMessage[] = messages.map((message) => {
-      const userParts =
-        message.role === 'user' && Array.isArray(message.parts)
-          ? message.parts
-          : [];
-      const fileParts = userParts.filter(
-        (part: any) => part.type === 'file' && part.data_base64,
-      );
-      const textPart = userParts.find((part: any) => part.type === 'text');
-      const textContent =
-        (textPart as any)?.text ||
-        (typeof message.content === 'string' ? message.content : '') ||
-        '';
+      const userMessage = getMostRecentUserMessage(messages);
 
-      if (message.id === userMessage.id && fileParts.length > 0) {
-        return {
-          role: 'user',
-          content: [
-            { type: 'text', text: textContent },
-            ...fileParts.map((part: any) => ({
-              type: 'file' as const,
-              data: Buffer.from(part.data_base64, 'base64'),
-              mimeType: part.mimeType,
-              name: part.name,
-            })),
-          ],
-        };
+      if (!userMessage) {
+        return new Response('No user message found', { status: 400 });
       }
 
-      return {
-        role: message.role,
-        content: textContent || (message.content ?? ''),
-      } as CoreMessage;
-    });
-
-    const dbAttachments = (userMessage.parts ?? [])
-      .filter((part: any) => part.type === 'file')
-      .map((part: any) => ({
-        name: part.name,
-        contentType: part.mimeType,
-      }));
-
-    await saveMessages({
-      messages: [
-        {
-          chatId: id,
-          id: userMessage.id,
-          role: 'user',
-          parts: (userMessage.parts ?? []).filter(
-            (part: any) => part.type === 'text',
-          ),
-          attachments: dbAttachments,
-          createdAt: new Date(),
-        },
-      ],
-    });
-
-    return createDataStreamResponse({
-      execute: (dataStream) => {
-        const result = streamText({
-          model: myProvider.languageModel(selectedChatModel),
-          system: systemPrompt,
-          messages: coreMessages,
-          maxSteps: 5,
-          experimental_transform: smoothStream({ chunking: 'word' }),
-          experimental_generateMessageId: generateUUID,
-          tools: {
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({ session, dataStream }),
-            searchProduct,
-            searchAntibody,
-            searchProductsByDescription,
+      const filePartsInData = (userMessage.parts ?? []).filter(
+        (part: any) => part.type === 'file' && part.data_base64,
+      );
+      if (filePartsInData.length > 0) {
+        const logFileReceived = traceable(
+          () => {
+            console.log(
+              `[LangSmith Trace] File received in message: ${userMessage.id}`,
+            );
           },
-          onFinish: async ({ response }) => {
-            if (session.user?.id) {
-              try {
-                const assistantId = getTrailingMessageId({
-                  messages: response.messages.filter(
-                    (message) => message.role === 'assistant',
-                  ),
-                });
+          {
+            name: 'File Attachment Received',
+            run_type: 'tool',
+          },
+        );
+        logFileReceived();
+      }
 
-                if (!assistantId) {
-                  throw new Error('No assistant message found!');
+      const chat = await getChatById({ id });
+
+      if (!chat) {
+        const title = await generateTitleFromUserMessage({
+          message: {
+            ...userMessage,
+            content: userMessage.content ?? '',
+          },
+        });
+
+        await saveChat({ id, userId: session.user.id, title });
+      } else {
+        if (chat.userId !== session.user.id) {
+          return new Response('Unauthorized', { status: 401 });
+        }
+      }
+
+      const coreMessages: CoreMessage[] = messages.map((message) => {
+        const userParts =
+          message.role === 'user' && Array.isArray(message.parts)
+            ? message.parts
+            : [];
+        const fileParts = userParts.filter(
+          (part: any) => part.type === 'file' && part.data_base64,
+        );
+        const textPart = userParts.find((part: any) => part.type === 'text');
+        const textContent =
+          (textPart as any)?.text ||
+          (typeof message.content === 'string' ? message.content : '') ||
+          '';
+
+        if (message.id === userMessage.id && fileParts.length > 0) {
+          return {
+            role: 'user',
+            content: [
+              { type: 'text', text: textContent },
+              ...fileParts.map((part: any) => ({
+                type: 'file' as const,
+                data: Buffer.from(part.data_base64, 'base64'),
+                mimeType: part.mimeType,
+                name: part.name,
+              })),
+            ],
+          };
+        }
+
+        return {
+          role: message.role,
+          content: textContent || (message.content ?? ''),
+        } as CoreMessage;
+      });
+
+      const dbAttachments = (userMessage.parts ?? [])
+        .filter((part: any) => part.type === 'file')
+        .map((part: any) => ({
+          name: part.name,
+          contentType: part.mimeType,
+        }));
+
+      await saveMessages({
+        messages: [
+          {
+            chatId: id,
+            id: userMessage.id,
+            role: 'user',
+            parts: (userMessage.parts ?? []).filter(
+              (part: any) => part.type === 'text',
+            ),
+            attachments: dbAttachments,
+            createdAt: new Date(),
+          },
+        ],
+      });
+
+      return createDataStreamResponse({
+        execute: (dataStream) => {
+          const result = streamText({
+            model: myProvider.languageModel(selectedChatModel),
+            system: systemPrompt,
+            messages: coreMessages,
+            maxSteps: 5,
+            experimental_transform: smoothStream({ chunking: 'word' }),
+            experimental_generateMessageId: generateUUID,
+            tools: {
+              createDocument: createDocument({ session, dataStream }),
+              updateDocument: updateDocument({ session, dataStream }),
+              requestSuggestions: requestSuggestions({ session, dataStream }),
+              searchProduct,
+              searchAntibody,
+              searchProductsByDescription,
+            },
+            onFinish: async ({ response }) => {
+              if (session.user?.id) {
+                try {
+                  const assistantId = getTrailingMessageId({
+                    messages: response.messages.filter(
+                      (message) => message.role === 'assistant',
+                    ),
+                  });
+
+                  if (!assistantId) {
+                    throw new Error('No assistant message found!');
+                  }
+
+                  const finalAssistantCoreMessage =
+                    response.messages[response.messages.length - 1];
+
+                  if (finalAssistantCoreMessage?.role !== 'assistant') {
+                    console.error(
+                      "Last message wasn't from assistant",
+                      finalAssistantCoreMessage,
+                    );
+                    throw new Error(
+                      'Could not extract assistant message content',
+                    );
+                  }
+
+                  let assistantTextContent = '';
+                  if (typeof finalAssistantCoreMessage.content === 'string') {
+                    assistantTextContent = finalAssistantCoreMessage.content;
+                  } else if (Array.isArray(finalAssistantCoreMessage.content)) {
+                    const textPart = finalAssistantCoreMessage.content.find(
+                      (part) => part.type === 'text',
+                    );
+                    assistantTextContent = (textPart as any)?.text ?? '';
+                  }
+
+                  const messageToSave = {
+                    id: assistantId,
+                    chatId: id,
+                    role: 'assistant' as const,
+                    parts: [{ type: 'text', value: assistantTextContent }],
+                    attachments: [],
+                    createdAt: new Date(),
+                  };
+
+                  await saveMessages({ messages: [messageToSave] });
+                } catch (error) {
+                  console.error('Failed to save assistant message:', error);
                 }
-
-                const finalAssistantCoreMessage =
-                  response.messages[response.messages.length - 1];
-
-                if (finalAssistantCoreMessage?.role !== 'assistant') {
-                  console.error(
-                    "Last message wasn't from assistant",
-                    finalAssistantCoreMessage,
-                  );
-                  throw new Error(
-                    'Could not extract assistant message content',
-                  );
-                }
-
-                let assistantTextContent = '';
-                if (typeof finalAssistantCoreMessage.content === 'string') {
-                  assistantTextContent = finalAssistantCoreMessage.content;
-                } else if (Array.isArray(finalAssistantCoreMessage.content)) {
-                  const textPart = finalAssistantCoreMessage.content.find(
-                    (part) => part.type === 'text',
-                  );
-                  assistantTextContent = (textPart as any)?.text ?? '';
-                }
-
-                const messageToSave = {
-                  id: assistantId,
-                  chatId: id,
-                  role: 'assistant' as const,
-                  parts: [{ type: 'text', value: assistantTextContent }],
-                  attachments: [],
-                  createdAt: new Date(),
-                };
-
-                await saveMessages({ messages: [messageToSave] });
-              } catch (error) {
-                console.error('Failed to save assistant message:', error);
               }
-            }
-          },
-          experimental_telemetry: {
-            isEnabled: isProductionEnvironment,
-            functionId: 'stream-text',
-          },
-        });
+            },
+            experimental_telemetry: {
+              isEnabled: isProductionEnvironment,
+              functionId: 'stream-text',
+            },
+          });
 
-        result.consumeStream();
-        result.mergeIntoDataStream(dataStream, {
-          sendReasoning: true,
-        });
-      },
-      onError: (error) => {
-        console.error('Error in streamText execution:', error);
-        return 'Oops, an error occurred!';
-      },
-    });
-  } catch (error) {
-    console.error('Error in POST /api/chat:', error);
-    return new Response('An error occurred while processing your request!', {
-      status: 500,
-    });
-  }
-}
+          result.consumeStream();
+          result.mergeIntoDataStream(dataStream, {
+            sendReasoning: true,
+          });
+        },
+        onError: (error) => {
+          console.error('Error in streamText execution:', error);
+          return 'Oops, an error occurred!';
+        },
+      });
+    } catch (error) {
+      console.error('Error in POST /api/chat:', error);
+      return new Response('An error occurred while processing your request!', {
+        status: 500,
+      });
+    }
+  },
+  {
+    name: 'Chat Request',
+    run_type: 'chain',
+  },
+);
 
 export async function DELETE(request: Request) {
   const { searchParams } = new URL(request.url);
