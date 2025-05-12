@@ -3,91 +3,111 @@ import { queryPSP, handleApiError } from '@/lib/db';
 import { z } from 'zod';
 import { pspAuthMiddleware } from '../auth-middleware';
 
-const requestSchema = z.object({
+// Define request schema based on discoverAvailableDataTool parameters
+const discoverRequestSchema = z.object({
   discovery_type: z
     .enum(['countries', 'indicators'])
-    .describe('Specifies whether to list available countries or indicators.'),
+    .describe(
+      "Specifies whether to list all available 'countries' or all available 'indicators'.",
+    ),
   country_code_filter: z
     .string()
     .optional()
     .describe(
-      'Optional: If discovery_type is "indicators", filter indicators by this ISO country code.',
+      'Optional: If discovery_type is "indicators", you can provide an ISO country code (e.g., \'PY\') to list only indicators available for that country.',
     ),
 });
 
 export async function POST(request: Request) {
+  // Check authentication first
   const authResult = await pspAuthMiddleware(request);
   if (authResult) {
-    return authResult;
+    return authResult; // Return unauthorized response if authentication fails
   }
 
   try {
+    // Parse and validate request body
     const body = await request.json();
-    const params = requestSchema.parse(body);
+    const params = discoverRequestSchema.parse(body);
 
-    let sql: string;
+    let sql = '';
     const queryParams: any[] = [];
-    let paramIndex = 1;
+    let results: any[] = [];
 
     if (params.discovery_type === 'countries') {
-      // For discovering countries, we don't currently use indicator_filter from the initial thought,
-      // sticking to the simpler version from refined plan.
-      sql = `SELECT DISTINCT def.country_code FROM data_collect.survey_definition def ORDER BY def.country_code;`;
-    } else {
-      // discovery_type === 'indicators'
+      if (params.country_code_filter) {
+        // Technically, discovery_type 'countries' shouldn't have a country_code_filter
+        // as per the tool description. However, if it's provided, we can choose to ignore it
+        // or return a specific message. For now, ignoring it.
+        console.warn(
+          "Warning: country_code_filter provided with discovery_type 'countries'. Filter will be ignored for this discovery_type.",
+        );
+      }
+      sql = `
+        SELECT DISTINCT country AS country_code
+        FROM ps_families.family
+        WHERE country IS NOT NULL
+        ORDER BY country_code;
+      `;
+      const dbResult = await queryPSP(sql);
+      results = dbResult.rows.map((row) => ({
+        country_code: row.country_code,
+      }));
+    } else if (params.discovery_type === 'indicators') {
       if (params.country_code_filter) {
         sql = `
-          SELECT DISTINCT 
-            sl.code_name,
-            ss.short_name,
-            sdim.dimension_name
-          FROM data_collect.snapshot_stoplight sl
-          JOIN data_collect.snapshot s ON sl.snapshot_id = s.id
-          JOIN data_collect.survey_definition def ON s.survey_definition_id = def.id
-          JOIN data_collect.survey_stoplight ss ON sl.code_name = ss.code_name AND def.id = ss.survey_definition_id
-          JOIN data_collect.survey_dimension sdim ON ss.survey_dimension_id = sdim.id
-          WHERE def.country_code = $${paramIndex++}
-          ORDER BY sdim.dimension_name, ss.short_name, sl.code_name;
+          SELECT DISTINCT sst.code_name, sst.dimension
+          FROM data_collect.survey_stoplight sst
+          JOIN data_collect.snapshot sn ON sst.survey_definition_id = sn.survey_definition_id
+          JOIN ps_families.family f ON sn.family_id = f.family_id
+          WHERE f.country = $1
+          ORDER BY sst.code_name;
         `;
         queryParams.push(params.country_code_filter);
+        const dbResult = await queryPSP(sql, queryParams);
+        results = dbResult.rows.map((row) => ({
+          indicator_code_name: row.code_name,
+          dimension: row.dimension,
+        }));
       } else {
+        // No country filter, list all indicators
         sql = `
-          SELECT DISTINCT 
-            sl.code_name, 
-            ss.short_name, 
-            sdim.dimension_name 
-          FROM data_collect.snapshot_stoplight sl
-          JOIN data_collect.survey_stoplight ss ON sl.code_name = ss.code_name 
-          JOIN data_collect.survey_dimension sdim ON ss.survey_dimension_id = sdim.id 
-          ORDER BY sdim.dimension_name, ss.short_name, sl.code_name;
+          SELECT DISTINCT code_name, dimension
+          FROM data_collect.stoplight_indicator -- Or survey_stoplight if that's more appropriate for 'all'
+          ORDER BY code_name;
         `;
-        // Note: survey_definition might be needed if short_name or dimension mapping varies across surveys for the same code_name
-        // For a general list, this simpler query joining snapshot_stoplight directly to survey_stoplight (via code_name) and then to dimension should be okay.
-        // However, the most accurate distinct list of indicators *active in snapshots* linked to *their specific dimensions in those surveys* would be more complex.
-        // The current query for indicators without country filter might show all theoretically possible indicators from survey_stoplight if they share code_names with snapshot_stoplight.
-        // A more robust query might involve ensuring ss.survey_definition_id aligns with those present in data_collect.snapshot.
-        // For now, using the one from the plan which is simpler.
+        // For consistency, let's use survey_stoplight as it includes dimension directly.
+        // If stoplight_indicator is preferred, ensure 'dimension' is available or joined.
+        sql = `
+          SELECT DISTINCT code_name, dimension
+          FROM data_collect.survey_stoplight 
+          WHERE code_name IS NOT NULL AND dimension IS NOT NULL
+          ORDER BY code_name;
+        `;
+        const dbResult = await queryPSP(sql);
+        results = dbResult.rows.map((row) => ({
+          indicator_code_name: row.code_name,
+          dimension: row.dimension,
+        }));
       }
     }
 
-    console.log('=== EXECUTING SQL QUERY: discover-available-data ===');
+    // Log the query and parameters for debugging
+    console.log('=== EXECUTING SQL QUERY: discover_available_data ===');
+    console.log('Discovery Type:', params.discovery_type);
+    if (params.country_code_filter) {
+      console.log('Country Filter:', params.country_code_filter);
+    }
     console.log('SQL:', sql);
     console.log('PARAMS:', JSON.stringify(queryParams, null, 2));
-    console.log('===================================================');
+    console.log('======================================================');
 
-    const result = await queryPSP(sql, queryParams);
-
-    if (params.discovery_type === 'countries') {
-      return NextResponse.json(result.rows.map((row) => row.country_code));
-    } else {
-      return NextResponse.json(
-        result.rows.map((row) => ({
-          indicatorCodeName: row.code_name,
-          indicatorShortName: row.short_name,
-          dimensionName: row.dimension_name,
-        })),
-      );
-    }
+    return NextResponse.json({
+      discovery_type: params.discovery_type,
+      country_filter_applied: params.country_code_filter || null,
+      count: results.length,
+      data: results,
+    });
   } catch (error) {
     console.error('Error in discover-available-data:', error);
     if (error instanceof z.ZodError) {

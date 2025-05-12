@@ -24,13 +24,16 @@ import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
 import { sayHello } from '@/lib/ai/tools/say-hello';
-import { trackIndicatorImprovementTool } from '@/lib/ai/tools/psp/psp_head/track-indicator-improvement';
-import { compareIndicatorStatusByCountryTool } from '@/lib/ai/tools/psp/psp_head/compare-indicator-status-by-country';
-import { findResistantIndicatorsTool } from '@/lib/ai/tools/psp/psp_head/find-resistant-indicators';
-import { findCommonRedIndicatorsTool } from '@/lib/ai/tools/psp/organization_head/find-common-red-indicators';
-import { findSimilarFamiliesByNeedsTool } from '@/lib/ai/tools/psp/mentor/find-similar-families-by-needs';
-import { trackMentorFamilyProgressTool } from '@/lib/ai/tools/psp/mentor/track-mentor-family-progress';
+
+// Temporarily comment out PSP tool imports for debugging
+// import { trackIndicatorImprovementTool } from '@/lib/ai/tools/psp/psp_head/track-indicator-improvement';
+// import { compareIndicatorStatusByCountryTool } from '@/lib/ai/tools/psp/psp_head/compare-indicator-status-by-country';
+// import { findResistantIndicatorsTool } from '@/lib/ai/tools/psp/psp_head/find-resistant-indicators';
+// import { findCommonRedIndicatorsTool } from '@/lib/ai/tools/psp/organization_head/find-common-red-indicators';
+// import { findSimilarFamiliesByNeedsTool } from '@/lib/ai/tools/psp/mentor/find-similar-families-by-needs';
+// import { trackMentorFamilyProgressTool } from '@/lib/ai/tools/psp/mentor/track-mentor-family-progress';
 import { discoverAvailableDataTool } from '@/lib/ai/tools/psp/psp_head/discover-available-data';
+
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 
@@ -101,13 +104,15 @@ export async function POST(request: Request) {
             updateDocument: updateDocument({ session, dataStream }),
             requestSuggestions: requestSuggestions({ session, dataStream }),
             sayHello,
-            trackIndicatorImprovement: trackIndicatorImprovementTool,
-            compareIndicatorStatusByCountry:
-              compareIndicatorStatusByCountryTool,
-            findResistantIndicators: findResistantIndicatorsTool,
-            findCommonRedIndicators: findCommonRedIndicatorsTool,
-            findSimilarFamiliesByNeeds: findSimilarFamiliesByNeedsTool,
-            trackMentorFamilyProgress: trackMentorFamilyProgressTool,
+            // searchProduct,
+            // searchAntibody,
+            // Temporarily comment out PSP tools for debugging
+            // trackIndicatorImprovement: trackIndicatorImprovementTool,
+            // compareIndicatorStatusByCountry: compareIndicatorStatusByCountryTool,
+            // findResistantIndicators: findResistantIndicatorsTool,
+            // findCommonRedIndicators: findCommonRedIndicatorsTool,
+            // findSimilarFamiliesByNeeds: findSimilarFamiliesByNeedsTool,
+            // trackMentorFamilyProgress: trackMentorFamilyProgressTool,
             discoverAvailableData: discoverAvailableDataTool,
           },
           onFinish: async ({ response }) => {
