@@ -29,6 +29,7 @@ import {
   searchProductsByDescription,
   searchEntity,
 } from '@/lib/ai/tools/supabase-tools';
+import { helloWorldLambda } from '@/lib/ai/tools/helloworld';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 
@@ -102,6 +103,7 @@ export async function POST(request: Request) {
             searchAntibody,
             searchProductsByDescription,
             searchEntity,
+            helloWorldLambda,
           },
           onFinish: async ({ response }) => {
             if (session.user?.id) {
