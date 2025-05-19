@@ -23,7 +23,12 @@ import { generateTitleFromUserMessage } from '../../actions';
 import { createDocument } from '@/lib/ai/tools/create-document';
 import { updateDocument } from '@/lib/ai/tools/update-document';
 import { requestSuggestions } from '@/lib/ai/tools/request-suggestions';
-import { searchProduct, searchAntibody, searchProductsByDescription } from '@/lib/ai/tools/supabase-tools';
+import {
+  searchProduct,
+  searchAntibody,
+  searchProductsByDescription,
+  searchEntity,
+} from '@/lib/ai/tools/supabase-tools';
 import { isProductionEnvironment } from '@/lib/constants';
 import { myProvider } from '@/lib/ai/providers';
 
@@ -96,6 +101,7 @@ export async function POST(request: Request) {
             searchProduct,
             searchAntibody,
             searchProductsByDescription,
+            searchEntity,
           },
           onFinish: async ({ response }) => {
             if (session.user?.id) {
